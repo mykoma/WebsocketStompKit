@@ -1,0 +1,6 @@
+[
+  "-workspace", "WebsocketStompKit.xcworkspace",
+  "-scheme", "WebsocketStompKit",
+  "-sdk", "iphonesimulator",
+  "-arch", "i386"
+]
