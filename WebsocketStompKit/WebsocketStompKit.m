@@ -134,12 +134,7 @@
     [contents removeObjectAtIndex:0];
     for(NSString *line in contents) {
         if(hasHeaders) {
-            for (int i=0; i < [line length]; i++) {
-                unichar c = [line characterAtIndex:i];
-                if (c != '\x00') {
-                    [body appendString:[NSString stringWithFormat:@"%c", c]];
-                }
-            }
+            [body appendString:line];
         } else {
             if ([line isEqual:@""]) {
                 hasHeaders = YES;
@@ -152,7 +147,7 @@
             }
         }
     }
-    return [[STOMPFrame alloc] initWithCommand:command headers:headers body:body];
+    return [[STOMPFrame alloc] initWithCommand:command headers:headers body:[body stringByTrimmingCharactersInSet:[NSCharacterSet controlCharacterSet]]];
 }
 
 - (NSString *)description {
@@ -485,20 +480,21 @@ CFAbsoluteTime serverActivity;
     LogDebug(@"send heart-beat every %ld seconds", pingTTL);
     LogDebug(@"expect to receive heart-beats every %ld seconds", pongTTL);
     
+    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (pingTTL > 0) {
-            self.pinger = [NSTimer scheduledTimerWithTimeInterval: pingTTL
-                                                           target: self
-                                                         selector: @selector(sendPing:)
-                                                         userInfo: nil
-                                                          repeats: YES];
+            weakSelf.pinger = [NSTimer scheduledTimerWithTimeInterval: pingTTL
+                                                               target: weakSelf
+                                                             selector: @selector(sendPing:)
+                                                             userInfo: nil
+                                                              repeats: YES];
         }
         if (pongTTL > 0) {
-            self.ponger = [NSTimer scheduledTimerWithTimeInterval: pongTTL
-                                                           target: self
-                                                         selector: @selector(checkPong:)
-                                                         userInfo: @{@"ttl": [NSNumber numberWithInteger:pongTTL]}
-                                                          repeats: YES];
+            weakSelf.ponger = [NSTimer scheduledTimerWithTimeInterval: pongTTL
+                                                               target: weakSelf
+                                                             selector: @selector(checkPong:)
+                                                             userInfo: @{@"ttl": [NSNumber numberWithInteger:pongTTL]}
+                                                              repeats: YES];
         }
     });
     
